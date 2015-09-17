@@ -2,6 +2,7 @@
 #include <opencv2\opencv.hpp>  
 #include <iostream>  
 #include <string>  
+#include "matchTemplateTest.h"
 using namespace cv;  
 using namespace std;  
 
@@ -35,6 +36,7 @@ int main()
   imshow("mypic", img);
 #endif
 
+#if 0
   Mat grayimg(300,200,CV_8UC1);
 
   imshow("mypic", grayimg); 
@@ -58,5 +60,19 @@ int main()
 
   imshow("mypic", grayimg);
   waitKey(0);
+
+#endif
+#if 1
+   
+
+
+  testBase *t = new matchTemplateTest();
+
+  t->doTest();
+
+
+  delete t;
+  //getchar();//not use waitKey of opencv due to its need a window to active
+#endif
   return 0;  
 }  
