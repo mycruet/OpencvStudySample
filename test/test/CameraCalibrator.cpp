@@ -1,9 +1,14 @@
 #include "CameraCalibrator.h"
 
 
-CameraCalibrator::CameraCalibrator(void):flag(CV_CALIB_ZERO_TANGENT_DIST),mustInitUndistort(true)
+CameraCalibrator::CameraCalibrator(void):flag(0),mustInitUndistort(true)
 {
 		std::cout<<"'''''''''''''''''''''''''"<<std::endl;
+}
+CameraCalibrator::CameraCalibrator(cv::Size boardSize):flag(0),mustInitUndistort(true)
+{
+	std::cout<<"==================="<<std::endl;
+	boardSize_ = boardSize;
 }
 
 
@@ -41,7 +46,7 @@ int CameraCalibrator::addChessboardPoints(
 		} 
 		
 
-#if 1
+#if 0
 		for(int i = 0; i < objectCorners.size(); i++)
 		{
 			//cv::Point2f *t;
@@ -66,6 +71,12 @@ int CameraCalibrator::addChessboardPoints(
 
 			image = cv::imread(filelist[i],0); 
 			std::cout<<image.rows<<"X"<<image.cols<<image.type()<<std::endl;
+
+
+			//GaussianBlur(image, image, cv::Size(9, 9), 2, 2);
+
+
+
 
 			// Get the chessboard corners 
 			bool found = cv::findChessboardCorners( 
@@ -99,12 +110,21 @@ int CameraCalibrator::addChessboardPoints(
 #endif
 
 
-#if 1
+#if 0
 
 			cv::drawChessboardCorners(image,  
 				boardSize, imageCorners,  
 				found); // corners have been found 
 			imshow(itoa(i,buffer,10), image);
+#endif
+
+#if 0
+
+			circle(image,cvPoint(175,151),98,CV_RGB(0,255,255),2,8,0);  
+			circle(image,cvPoint(470,440),185,CV_RGB(0,255,255),2,8,0);  
+			circle(image,cvPoint(933,630),47,CV_RGB(0,255,255),2,8,0);  
+			imshow("circle", image);
+			imwrite("circleTest.jpg", image);
 #endif
 
 			//If we have a good board, add it to our data 
@@ -129,7 +149,7 @@ void CameraCalibrator::calibrate(cv::Size &imageSize)
 	//std::vector<cv::Mat> rvecs, tvecs; 
 
 	// start calibration 
-#if 1
+#if 0
 	for(int i = 0; i < imagePoints.size(); i++)
 	{
 		std::cout<<"=="<<i<<"==pic"<<std::endl;
@@ -258,6 +278,41 @@ cv::Mat CameraCalibrator::remap(const cv::Mat &image) {
 	cv::remap(image, undistorted, map1, map2,  
 		cv::INTER_LINEAR); // interpolation type 
 
+
+	//imshow("dis", undistorted);
+#if 0
+	//找到去掉基畸变的角点
+	std::vector<cv::Point2f> disimageCorners; 
+
+	// Get the chessboard corners 
+	bool found = cv::findChessboardCorners( 
+		undistorted,  cv::Size(9, 6), disimageCorners); 
+
+	// Get subpixel accuracy on the corners 
+#if 0
+	cv::cornerSubPix(undistorted, disimageCorners,  
+		cv::Size(5,5),  
+		cv::Size(-1,-1),  
+		cv::TermCriteria(cv::TermCriteria::MAX_ITER + 
+		cv::TermCriteria::EPS,  
+		30,      // max number of iterations  
+		0.1));  // min accuracy 
+#endif
+
+#if 1
+	for(int i = 0; i < disimageCorners.size(); i++)
+	{
+		
+		cv::Point2f t = disimageCorners[i];
+		std::cout<<"dis points"<<std::endl;
+		std::cout<<"("<<t.x<<","<<t.y<<")"<<"    ";
+		std::cout<<std::endl;
+	}
+#endif
+
+
+
+#endif
 	return undistorted; 
 } 
 void  CameraCalibrator::reprojectFromImageToObject()
@@ -465,10 +520,104 @@ void  CameraCalibrator::reprojectFromImageToObject()
 
 #endif
 
-	cv::Point3f p;
-	p = getDistanceFromObjToImag(0,0);
-	std::cout<<p.x<<"-"<<p.y<<std::endl; 
+	cv::Point3f sump = (0,0,0);
+	cv::Point3f p    = (0,0,0);
+	int i;
+
+	for(i = 0; i < 54; i++)
+	{
+		p = getDistanceFromObjToImag(0,i);
+		std::cout<<"------------->>>>>>>>>"<<p.x<<"-"<<p.y<<std::endl; 
+
+		sump.x = sump.x + p.x;
+		sump.y = sump.y + p.y;
+	}
+	sump.x = sump.x/i;
+	sump.y = sump.y/i;
+	std::cout<<sump.x<<"-"<<sump.y<<std::endl; 
 }
+
+
+void  CameraCalibrator::reprojectFromImageToObject(cv::Mat image)
+{
+#if 0
+	std::vector<cv::Point2f> imageCorners; 
+	bool found = cv::findChessboardCorners( 
+		image, boardSize_, imageCorners); 
+
+	std::cout<<"===="<<imageCorners.size()<<std::endl;
+
+
+	// Get subpixel accuracy on the corners 
+
+	cv::cornerSubPix(image, imageCorners,  
+		cv::Size(5,5),  
+		cv::Size(-1,-1),  
+		cv::TermCriteria(cv::TermCriteria::MAX_ITER + 
+		cv::TermCriteria::EPS,  
+		30,      // max number of iterations  
+		0.1));  // min accuracy 
+
+
+	cv::Point3f sump = (0,0,0);
+	cv::Point3f p    = (0,0,0);
+	int i;
+
+	for(i = 0; i < imageCorners.size(); i++)
+	{
+		//p = getDistanceFromObjToImag(0,i);
+		std::cout<<"------------->>>>>>>>>"<<p.x<<"-"<<p.y<<std::endl; 
+
+		sump.x = sump.x + p.x;
+		sump.y = sump.y + p.y;
+	}
+	sump.x = sump.x/i;
+	sump.y = sump.y/i;
+	std::cout<<sump.x<<"-"<<sump.y<<std::endl; 
+#endif
+}
+
+void  CameraCalibrator::checkCircle(cv::Mat src)
+{
+	//cv::Mat  src_gray;
+	//cvtColor( src, src_gray, CV_BGR2GRAY );
+	//GaussianBlur( src_gray, src_gray, cv::Size(9, 9), 2, 2 );
+	GaussianBlur( src, src, cv::Size(9, 9), 2, 2 );
+	std::vector<cv::Vec3f> circles;
+	//HoughCircles( src_gray, circles, CV_HOUGH_GRADIENT, 1, src_gray.rows/8, 200, 100, 0, 0);
+	HoughCircles( src, circles, CV_HOUGH_GRADIENT, 1, src.rows/8, 50, 100, 0, 0);
+	for( size_t i = 0; i < circles.size(); i++ )
+	{
+		cv::Mat rod;
+		cv::Rodrigues(rvecs[0],rod);
+		cv::Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
+		std::cout<<"circle centr"<<"x=="<<circles[i][0]<<"y==="<<circles[i][1]<<std::endl;
+		cv::Point2f p(circles[i][0], circles[i][1]);
+	    cv::Mat objXY = reprojectFromImageToObject2TO3(p, A, D, rod, tvecs[0]);
+
+		std::cout<<"circle objXY---->"<<objXY<<std::endl; 
+
+		int radius = cvRound(circles[i][2]);
+		
+		// circle center
+		circle( src, center, 3, cv::Scalar(0,255,0), -1, 8, 0 );
+		// circle outline
+		circle( src, center, radius, cv::Scalar(0,0,255), 3, 8, 0 );
+
+	}	//circle(image,cvPoint(175,151),98,CV_RGB(0,255,255),2,8,0);  
+
+	imshow("circle", src);
+
+}
+
+
+
+
+
+
+
+
+
 
 /*
 合并列向量维数一样的矩阵
@@ -477,9 +626,9 @@ void  CameraCalibrator::reprojectFromImageToObject()
 cv::Mat mergeByCols(cv::Mat &a, cv::Mat &b)
 {
 	assert(a.rows == b.rows && a.type() == b.type());
-    std::cout<<a.type()<<std::endl;
-	std::cout<<a<<std::endl;
-	std::cout<<b<<std::endl;
+    //std::cout<<a.type()<<std::endl;
+	//std::cout<<a<<std::endl;
+	//std::cout<<b<<std::endl;
 	cv::Mat M(a.rows, a.cols + b.cols, a.type());
 	//cv::Mat k;
 	//std::cout<<k<<k.cols<<k.rows<<k.type()<<std::endl;
@@ -519,8 +668,8 @@ cv::Mat reprojectFromImageToObject2TO3(cv::Point2f imagP, cv::Mat cameraMatrix, 
 {
 
 	//参数检测以及矩阵内部数据类转换（double)
-	std::cout<<"=========cameraMatrix====================="<<std::endl;
-	std::cout<<cameraMatrix<<std::endl;
+	//std::cout<<"=========cameraMatrix====================="<<std::endl;
+	//std::cout<<cameraMatrix<<std::endl;
 	assert(cameraMatrix.rows == 3 && cameraMatrix.cols == 3);
 	if(cameraMatrix.type() != CV_64FC1)
 	{
@@ -528,12 +677,12 @@ cv::Mat reprojectFromImageToObject2TO3(cv::Point2f imagP, cv::Mat cameraMatrix, 
 		cameraMatrix.convertTo(cameraMatrix, CV_64FC1);
 	}
 
-	std::cout<<"=========disMatrix====================="<<std::endl;
-	std::cout<<disMatrix<<std::endl;
+	//std::cout<<"=========disMatrix====================="<<std::endl;
+	//std::cout<<disMatrix<<std::endl;
 	assert(disMatrix.rows == 1 && disMatrix.cols == 5);
 
-	std::cout<<"==========RodMatrixMatrix====================="<<std::endl;
-	std::cout<<RodMatrix<<std::endl;
+	//std::cout<<"==========RodMatrixMatrix====================="<<std::endl;
+	//std::cout<<RodMatrix<<std::endl;
 	assert(RodMatrix.rows == 3 && RodMatrix.cols == 3);
 	if(RodMatrix.type()!= CV_64FC1)
 	{
@@ -541,8 +690,10 @@ cv::Mat reprojectFromImageToObject2TO3(cv::Point2f imagP, cv::Mat cameraMatrix, 
 		RodMatrix.convertTo(RodMatrix, CV_64FC1);
 	}
 
-	std::cout<<"==========TMatrix====================="<<std::endl;
-	std::cout<<TMatrix<<std::endl;
+	
+
+	//std::cout<<"==========TMatrix====================="<<std::endl;
+	//std::cout<<TMatrix<<std::endl;
 	assert(TMatrix.rows == 3 && TMatrix.cols == 1);
 	if(TMatrix.type() != CV_64FC1)
 	{
@@ -554,6 +705,7 @@ cv::Mat reprojectFromImageToObject2TO3(cv::Point2f imagP, cv::Mat cameraMatrix, 
 	cv::Mat camerap;
 	cv::Mat imgpp;
 	std::vector<cv::Point2f> imgp;
+	//std::cout<<"imgp x==="<<imagP.x<<"y==="<<imagP.y<<std::endl;
 	imgp.push_back(imagP);
 	cv::undistortPoints(imgp, camerap, cameraMatrix, disMatrix);
 	cv::perspectiveTransform(camerap, imgpp, cameraMatrix);
@@ -568,8 +720,8 @@ cv::Mat reprojectFromImageToObject2TO3(cv::Point2f imagP, cv::Mat cameraMatrix, 
 	
 	
 	cv::Mat externalParam = mergeByCols(RodMatrix, TMatrix);
-	std::cout<<"=========externalParam====================="<<std::endl;
-	std::cout<<externalParam<<std::endl;
+	//std::cout<<"=========externalParam====================="<<std::endl;
+	//std::cout<<externalParam<<std::endl;
 	assert(externalParam.rows == 3 && externalParam.cols == 4);
 #if 0
 	if(RandTMaxtix != NULL)
@@ -582,8 +734,8 @@ cv::Mat reprojectFromImageToObject2TO3(cv::Point2f imagP, cv::Mat cameraMatrix, 
 
 	cv::Mat HomoP = cameraMatrix * externalParam;
 
-	std::cout<<"=========HomoP====================="<<std::endl;
-	std::cout<<HomoP<<std::endl;
+	//std::cout<<"=========HomoP====================="<<std::endl;
+	//std::cout<<HomoP<<std::endl;
 	assert(HomoP.rows == 3 && HomoP.cols == 4);
 
 /*在映射关系中消去Zc，计算求解两个矩阵
@@ -625,7 +777,23 @@ cv::Point3f  CameraCalibrator::getDistanceFromObjToImag(int picNum, int cornerNu
 	cv::Mat rod;
 	cv::Rodrigues(rvecs[picNum],rod);
 	cv::Point3f objXYZ = objectPoints[picNum][cornerNum];
+	std::cout<<"X---"<<objXYZ.x<<"Y----"<<objXYZ.y<<std::endl;
 	cv::Point3f ret = (0,0,0);
+#if 0
+	//先整幅图去掉畸变
+	cv::Mat dism = undistorteds[picNum];
+	assert(dism.channels() == 1);
+	std::cout<<"dim"<<std::endl;
+	std::cout<<dism<<std::endl;
+
+	int ri = cornerNum/(dism.cols * 2);
+	int ci = cornerNum%(dism.cols *2);
+	double *pp = dism.ptr<double>(ri);
+	cv::Point2f temp2D = (pp[ci], pp[ci+1]);
+	//std::cout<<sizeof(double)<<std::endl;//64位下double是8字节
+	std::cout<<"x"<<temp2D.x<<"y"<<temp2D.y<<std::endl;
+#endif
+	
 	cv::Mat objXY = reprojectFromImageToObject2TO3(imagePoints[picNum][cornerNum], A, D, rod, tvecs[picNum]);
 	std::cout<<objXY<<std::endl; 
 	assert(objXY.cols == 1 && objXY.rows == 2);

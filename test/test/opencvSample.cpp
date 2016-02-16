@@ -379,10 +379,10 @@ int main()
      //cout<<itoa(13,buffer,10)<<endl;
 	 //cin>>buffer;
 #if 1
-
-   CameraCalibrator *c = new CameraCalibrator();
- 
    cv::Size boardSize(9, 6); 
+   CameraCalibrator *c = new CameraCalibrator(boardSize);
+ 
+ 
    //vector<int> v ={0,1};//C++11
   // vector<int> v; 
    //vector<int> v;
@@ -393,32 +393,41 @@ int main()
   // String s[] = {"chessboard01.jpg","chessboard02.jpg","chessboard03.jpg","chessboard04.jpg"};
    vector<string> s;
    //vector<string> s ={"chessboard01.jpg","chessboard02.jpg","chessboard03.jpg","chessboard04.jpg"};
-   s.push_back("test0.jpg");
-//   s.push_back("my2.jpg"); 
-//   s.push_back("my3.jpg");
-//   s.push_back("my4.jpg");
-//   s.push_back("my5.jpg");
-//   s.push_back("my6.jpg"); 
-//   s.push_back("my7.jpg");
-//   s.push_back("my8.jpg");
-//   s.push_back("my9.jpg");
-//   s.push_back("my10.jpg"); 
- //  s.push_back("chessboard01.jpg");
- //  s.push_back("chessboard02.jpg"); 
- //  s.push_back("chessboard03.jpg");
-//   s.push_back("chessboard04.jpg");
+   s.push_back("testp/test0.jpg");
 
+   s.push_back("testp/test1.jpg");
+   
+   //s.push_back("testp/test2.jpg");   
+	
+   s.push_back("testp/test3.jpg");
+   s.push_back("testp/test4.jpg");
+   //s.push_back("testp/test5.jpg");//
+  // s.push_back("testp/test6.jpg");//
+  //s.push_back("testp/test7.jpg");
+ //s.push_back("testp/test8.jpg");//
+  // s.push_back("testp/test9.jpg");
+ 
   
-   if(c->addChessboardPoints(s,boardSize) != 1)
+
+ // s.push_back("testpic/test0.jpg");
+
+
+
+   if(c->addChessboardPoints(s,boardSize) != s.size())
+   {
 	   cout<<"error"<<endl;
+   }
    c->calibrate(boardSize);
-   Mat iamge = imread(s[0],0);
-//   c->remap(iamge);
-//   c->addChessboardPoints2(s,boardSize);
+   //Mat image = imread(s[0],0);
+   //c->remap(image);
+  // c->reprojectFromImageToObject();
+   Mat image = imread("testpic/test0.jpg",0);
+   c->checkCircle(image);
+
 
    delete c;
 
-   
+   //getchar();
 #endif
 
 

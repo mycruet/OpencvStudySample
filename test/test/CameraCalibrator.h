@@ -12,6 +12,7 @@ class CameraCalibrator
 {
 public:
 	CameraCalibrator(void);
+	CameraCalibrator(cv::Size);
 	virtual ~CameraCalibrator(void);
 	// input points: 
 	// the points in world coordinates 
@@ -30,6 +31,8 @@ public:
 	// used in image undistortion  
 	cv::Mat map1,map2;  
 	bool mustInitUndistort; 
+	cv::Size  boardSize_;
+
 public:
 	// Open chessboard images and extract corner points 
 	int addChessboardPoints(const std::vector<std::string>& filelist,  cv::Size & boardSize);
@@ -41,7 +44,9 @@ public:
 	// remove distortion in an image (after calibration) 
 	cv::Mat remap(const cv::Mat &image);
 	void reprojectFromImageToObject();
-    cv::Point3f  getDistanceFromObjToImag(int picNum, int cornerNum);
+	void reprojectFromImageToObject(cv::Mat Image);
+	cv::Point3f  getDistanceFromObjToImag(int picNum, int cornerNum);
+	void checkCircle(cv::Mat Image);
 
 };
 
